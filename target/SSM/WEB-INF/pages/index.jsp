@@ -12,7 +12,7 @@
 </head>
 <body>
     <a href="account/findAll">测试SpringMVC/Mybatis(annotations)查询</a>
-    <a href="person/findAllPerson">测试SpringMVC/Mybatis(XML)查询</a>
+    <br><a href="person/findAllPerson">测试SpringMVC/Mybatis(XML)查询</a>
     <h3>测试包</h3>
 
     <form action="account/save" method="post">

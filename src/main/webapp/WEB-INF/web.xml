@@ -47,4 +47,8 @@
     <param-name>contextConfigLocation</param-name>
     <param-value>classpath:config/spring/applicationContext.xml</param-value>
   </context-param>
+
+  <listener>
+    <listener-class>com.dearzss.config.Log4j2ConfigListener</listener-class>
+  </listener>
 </web-app>
