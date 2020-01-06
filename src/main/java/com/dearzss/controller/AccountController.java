@@ -12,11 +12,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 @Controller
+@RequestMapping("/account")
 public class AccountController {
     @Autowired
     private AccountService accountService;
 
-    @RequestMapping("/account/findAll")
+    @RequestMapping("/findAll")
     public ModelAndView findAll(ModelAndView mv){
         System.out.println("Controller表现层：查询所有账户...");
 
@@ -26,7 +27,7 @@ public class AccountController {
         return mv;
     }
 
-    @RequestMapping("account/save")
+    @RequestMapping("/save")
     public void saveAccount(Account account, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws Exception{
         accountService.saveAccount(account);
         httpServletResponse.sendRedirect(httpServletRequest.getContextPath() + "/account/findAll");
