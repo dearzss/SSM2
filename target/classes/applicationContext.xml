@@ -13,6 +13,7 @@
 	http://www.springframework.org/schema/tx
 	http://www.springframework.org/schema/tx/spring-tx.xsd">
 
+    <context:property-placeholder location="classpath:jdbc.properties" />
     <!--开启注解的扫描，希望处理service和dao，controller不需要Spring框架去处理-->
     <context:component-scan base-package="com.dearzss" >
         <!--配置哪些注解不扫描-->
@@ -22,10 +23,20 @@
     <!--Spring整合MyBatis框架-->
     <!--配置连接池-->
     <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
-        <property name="driverClass" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
-        <property name="jdbcUrl" value="jdbc:sqlserver://127.0.0.1:1433;DatabaseName=TEST"/>
-        <property name="user" value="dearzss"/>
-        <property name="password" value="1234567890"/>
+        <property name="driverClass" value="${jdbc.driver}"/>
+        <property name="jdbcUrl" value="${jdbc.url}"/>
+        <property name="user" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+
+        <!-- c3p0连接池的私有属性 -->
+        <property name="maxPoolSize" value="30"/>
+        <property name="minPoolSize" value="10"/>
+        <!-- 关闭连接后不自动commit -->
+        <property name="autoCommitOnClose" value="false"/>
+        <!-- 获取连接超时时间 -->
+        <property name="checkoutTimeout" value="10000"/>
+        <!-- 当获取连接失败重试次数 -->
+        <property name="acquireRetryAttempts" value="2"/>
     </bean>
 
     <!--配置SqlSessionFactory工厂-->
