@@ -7,7 +7,8 @@
   <display-name>Archetype Created Web Application</display-name>
   <!--welcome pages-->
   <welcome-file-list>
-    <welcome-file>/WEB-INF/pages/index.jsp</welcome-file>
+    <!--<welcome-file>/WEB-INF/pages/index.jsp</welcome-file> -->
+    <welcome-file>/WEB-INF/pages/uploadExcel.jsp</welcome-file>
   </welcome-file-list>
   <!--配置前端控制器-->
   <servlet>
@@ -48,7 +49,12 @@
     <param-value>classpath:config/spring/applicationContext.xml</param-value>
   </context-param>
 
+  <!--
   <listener>
     <listener-class>com.dearzss.config.Log4j2ConfigListener</listener-class>
+  </listener>
+  -->
+  <listener>
+    <listener-class>org.apache.logging.log4j.web.Log4jServletContextListener</listener-class>
   </listener>
 </web-app>
