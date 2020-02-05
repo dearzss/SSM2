@@ -183,6 +183,7 @@ public class ExcelController {
             bufferWritter.write(record);
             bufferWritter.newLine();
             bufferWritter.write("-------------------------------------------------------------");
+            bufferWritter.newLine();
         }
 
         bufferWritter.close();
@@ -202,7 +203,8 @@ public class ExcelController {
             response.getWriter().print("<html><body><script type='text/javascript'>alert('File not exists!!!');</script></body></html>");
             response.getWriter().close();
             System.out.println("File not exists!!!");
-            return;
+
+            response.sendRedirect(request.getContextPath() + "/excel/findAllExcel");
         }
 
         //转码，免得文件名中文乱码

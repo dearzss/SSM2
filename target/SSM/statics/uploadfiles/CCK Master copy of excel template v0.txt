@@ -1,0 +1,10 @@
+INSERT INTO table1(a,c,e,d,c) VALUES (CONVERT(datetime,'20191010',120),'NRIC','SG','MR.','AASDS'),(CONVERT(datetime,'20191011',120),'FIN','CN','MR.','DSA'),(CONVERT(datetime,'20191012',120),'Pass',null,'MR.','CVFD');
+-------------------------------------------------------------INSERT INTO table2(c,b,e) VALUES (1232.31,CONVERT(datetime,'20191010',120),'AASDS'),('182',CONVERT(datetime,'20191011',120),'DSA'),('E123231',CONVERT(datetime,'20191012',120),'CVFD');
+-------------------------------------------------------------INSERT INTO table3(d,e,c) VALUES ('MR.','AASDS','Male'),('MR.','DSA','Female'),('MR.','CVFD','Male');
+-------------------------------------------------------------INSERT INTO table1(a,c,d,c,e) VALUES (null,null,null,null,null),(null,null,null,null,null);
+-------------------------------------------------------------INSERT INTO table2(b,c,e) VALUES (null,null,null),(null,null,null);
+-------------------------------------------------------------INSERT INTO table3(c,d,e) VALUES (null,null,null),(null,null,null);
+-------------------------------------------------------------INSERT INTO table1(e,c,a,c,d) VALUES (null,null,null,null,null);
+-------------------------------------------------------------INSERT INTO table2(e,b,c) VALUES (null,null,null);
+-------------------------------------------------------------INSERT INTO table3(e,d,c) VALUES (null,null,null);
+-------------------------------------------------------------
