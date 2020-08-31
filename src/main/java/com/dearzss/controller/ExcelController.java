@@ -10,13 +10,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.*;
 import java.net.URLEncoder;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Controller
@@ -75,121 +73,198 @@ public class ExcelController {
         File file = new File(path + File.separator+fileName);
         InputStream in = new FileInputStream(file);
         InputStream inputStream = new FileInputStream(file);
-
         List<String[][]> arrayList  = ExcelUtils.createArray(in,fileName);
         List<String[][]> lists = ExcelUtils.getBankListByExcel(inputStream, fileName, arrayList);
-        List<HashMap> hashMapList = new ArrayList<>();
-        List<HashMap> hashMapListResult = new ArrayList<>();
-        for(int j=0; j<lists.size(); j++){
-            String[] tables = null;
-            String[][] strings = lists.get(j);
-            HashMap map = new HashMap<>();
-            if(strings.length <= 2) continue;
-            for(int x=0; x<strings.length; x++){
-                if(x == 0) continue;
-                if(x == 1){
-                    for(int y=0; y<strings[x].length; y++) {
-                        if (x == 1 && y == 0) {
-                            tables = strings[x][y].split(";");
-                            continue;
+        StringBuffer stringBuffer1 = new StringBuffer();
+
+        stringBuffer1.append("IF EXISTS\n");
+        stringBuffer1.append("(SELECT 1 FROM sysobjects WHERE NAME='USP_"+fileName.split("[.]")[0]+"_for_excel')\n");
+        stringBuffer1.append("DROP PROCEDURE USP_"+fileName.split("[.]")[0]+"_for_excel\n");
+        stringBuffer1.append("GO\n");
+        stringBuffer1.append("CREATE PROCEDURE USP_"+fileName.split("[.]")[0]+"_for_excel\n");
+        stringBuffer1.append("AS\n");
+        stringBuffer1.append("\n");
+        stringBuffer1.append("BEGIN\n");
+        stringBuffer1.append("\n");
+        stringBuffer1.append("BEGIN TRANSACTION;\n");
+        stringBuffer1.append("\n");
+
+        if(fileName.contains("MFPD")){
+            for(int j=0; j<lists.size(); j++) {
+                String[][] strings = lists.get(j);
+                for (int x = 0; x < strings.length; x++) {
+                    StringBuffer stringBuffer2 = new StringBuffer();
+                    String tableName = "";
+                    if (x == 0) continue;
+                    if (x != 0) {
+                        for (int y = 0; y < strings[x].length; y++) {
+                            if (y == 0) {
+                                if(strings[x][0].contains("APPLICATIONS")){
+                                    stringBuffer1.append("delete from " + strings[x][0] + " where licenceservice_type = '"+ fileName.split("_")[1] +"' and LastUpdBy like '%_excel';");
+                                }else{
+                                    stringBuffer1.append("delete from " + strings[x][0] + " where LastUpdBy = 'ILS_BCP';");
+                                }
+                                stringBuffer1.append("\n");
+                                stringBuffer1.append("Insert into " + strings[x][0] + "\n");
+                                stringBuffer1.append("(\n");
+                                stringBuffer2.append("select\n");
+                                tableName = "[excel_data].[tb_" + fileName.split("[.]")[0] +"_application]";
+                            }
+                            if (y != 0 && strings[x][y] != null && strings[x][y].length() != 0){
+                                if(strings[x][y].trim().equalsIgnoreCase("LastUpdBy")){
+                                    stringBuffer1.append(strings[x][y] + ",\n");
+                                    stringBuffer2.append("'ILS_BCP' as " + strings[x][y] + ",\n");
+                                }else{
+                                    stringBuffer1.append(strings[x][y] + ",\n");
+                                    stringBuffer2.append("[" + strings[0][y] + "] as " + strings[x][y] +",\n");
+                                }
+                            }
                         }
-                        if (tables == null) continue;
-                        for (String tablename : tables) {
-                            if (y != 0 && strings[1][y] != null && strings[1][y] != "null" && strings[1][y].indexOf(tablename) != -1) {
-                                if(strings[1][y].indexOf(";",strings[1][y].indexOf(tablename)) != -1){
-                                    map.put(j + ":" + tablename + ":" + y, strings[1][y].substring(strings[1][y].indexOf(tablename) + tablename.length() + 1,strings[1][y].indexOf(";",strings[1][y].indexOf(tablename))));
-                                }else {
-                                    map.put(j + ":" + tablename + ":" + y, strings[1][y].substring(strings[1][y].indexOf(tablename) + tablename.length() + 1));
+                        stringBuffer1 = stringBuffer1.deleteCharAt(stringBuffer1.length() - 2);
+                        stringBuffer1.append(")\n");
+                        stringBuffer2 = stringBuffer2.deleteCharAt(stringBuffer2.length() - 2);
+                        stringBuffer2.append("from " + tableName + "\n");
+                        stringBuffer1.append(stringBuffer2.toString());
+                        stringBuffer1.append("\n");
+                        stringBuffer1.append("\n");
+                    }
+                }
+            }
+            stringBuffer1.append("\n");
+            stringBuffer1.append("\n");
+            stringBuffer1.append("COMMIT TRANSACTION;\n");
+            stringBuffer1.append("\n");
+            stringBuffer1.append("END\n");
+            stringBuffer1.append("\n");
+            stringBuffer1.append("/*EXEC USP_"+fileName.split("[.]")[0]+"_for_excel*/");
+
+            File file2 = new File(path + File.separator + fileName.split("\\.")[0] + ".txt");
+            if(!file2.exists()){
+                file2.createNewFile();
+            }else{
+                file2.delete();
+                file2.createNewFile();
+            }
+
+            FileWriter fileWritter = new FileWriter(path + File.separator + fileName.split("\\.")[0] + ".txt",true);
+            BufferedWriter bufferWritter = new BufferedWriter(fileWritter);
+            bufferWritter.flush();
+            bufferWritter.write(stringBuffer1.toString());
+            bufferWritter.close();
+            fileWritter.close();
+        }else{
+            List<HashMap> hashMapList = new ArrayList<>();
+            List<HashMap> hashMapListResult = new ArrayList<>();
+            for(int j=0; j<lists.size(); j++){
+                String[] tables = null;
+                String[][] strings = lists.get(j);
+                HashMap map = new HashMap<>();
+                if(strings.length <= 2) continue;
+                for(int x=0; x<strings.length; x++){
+                    if(x == 0) continue;
+                    if(x == 1){
+                        for(int y=0; y<strings[x].length; y++) {
+                            if (x == 1 && y == 0) {
+                                tables = strings[x][y].split(";");
+                                continue;
+                            }
+                            if (tables == null) continue;
+                            for (String tablename : tables) {
+                                if (y != 0 && strings[1][y] != null && strings[1][y] != "null" && strings[1][y].indexOf(tablename) != -1) {
+                                    if(strings[1][y].indexOf(";",strings[1][y].indexOf(tablename)) != -1){
+                                        map.put(j + ":" + tablename + ":" + y, strings[1][y].substring(strings[1][y].indexOf(tablename) + tablename.length() + 1,strings[1][y].indexOf(";",strings[1][y].indexOf(tablename))));
+                                    }else {
+                                        map.put(j + ":" + tablename + ":" + y, strings[1][y].substring(strings[1][y].indexOf(tablename) + tablename.length() + 1));
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-            hashMapList.add(map);
-        }
-
-        for(HashMap map : hashMapList){
-            Set set=map.entrySet();
-            Iterator it=set.iterator();
-            int sheetNum = 0;
-            if(it.hasNext()){
-                Map.Entry me=(Map.Entry)it.next();
-                sheetNum = Integer.parseInt(me.getKey().toString().split(":")[0]);
+                hashMapList.add(map);
             }
 
-            for (String tablename : lists.get(sheetNum)[1][0].split(";")) {
-                it = set.iterator();
-                StringBuffer stringBuffer = new StringBuffer();
-                stringBuffer.append("INSERT INTO " + tablename + "(");
-
-                HashMap hashMap = new HashMap();
-                StringBuffer sb = new StringBuffer();
-                while (it.hasNext()) {
-                    Map.Entry me = (Map.Entry) it.next();
-
-                    if (me.getKey().toString().split(":")[1].equalsIgnoreCase(tablename)) {
-                        stringBuffer.append(me.getValue() + ",");
-                        sb.append(me.getKey().toString().split(":")[2] + ",");
-
-                    }
+            for(HashMap map : hashMapList){
+                Set set=map.entrySet();
+                Iterator it=set.iterator();
+                int sheetNum = 0;
+                if(it.hasNext()){
+                    Map.Entry me=(Map.Entry)it.next();
+                    sheetNum = Integer.parseInt(me.getKey().toString().split(":")[0]);
                 }
-                hashMap.put(sheetNum + ":" +stringBuffer.toString(), sb.toString());
-                hashMapListResult.add(hashMap);
-            }
-        }
 
-        File file1 = new File(path + File.separator + fileName.split("\\.")[0] + ".txt");
-        if(!file1.exists()){
-            file1.createNewFile();
-        }else{
-            file1.delete();
-            file1.createNewFile();
-        }
+                for (String tablename : lists.get(sheetNum)[1][0].split(";")) {
+                    it = set.iterator();
+                    StringBuffer stringBuffer = new StringBuffer();
+                    stringBuffer.append("INSERT INTO " + tablename + "(");
 
-        FileWriter fileWritter = new FileWriter(path + File.separator + fileName.split("\\.")[0] + ".txt",true);
-        BufferedWriter bufferWritter = new BufferedWriter(fileWritter);
+                    HashMap hashMap = new HashMap();
+                    StringBuffer sb = new StringBuffer();
+                    while (it.hasNext()) {
+                        Map.Entry me = (Map.Entry) it.next();
 
-        for(HashMap map : hashMapListResult){
-            Set set=map.entrySet();
-            Iterator it=set.iterator();
-            int sheetNum = 0;
-            StringBuffer stringBuffer = new StringBuffer();
-            String record = "";
+                        if (me.getKey().toString().split(":")[1].equalsIgnoreCase(tablename)) {
+                            stringBuffer.append(me.getValue() + ",");
+                            sb.append(me.getKey().toString().split(":")[2] + ",");
 
-            while (it.hasNext()){
-                Map.Entry me=(Map.Entry)it.next();
-                sheetNum = Integer.parseInt(me.getKey().toString().split(":")[0]);
-                stringBuffer.append(me.getKey().toString().split(":")[1].substring(0,me.getKey().toString().split(":")[1].length() -1) + ") VALUES (");
-                for(int x=2; x<lists.get(sheetNum).length; x++){
-                    String cellNum = me.getValue().toString().substring(0,me.getValue().toString().length() - 1);
-                    for(String cellValue : cellNum.split(",")) {
-                        if(Utils.isValidDate(lists.get(sheetNum)[x][Integer.parseInt(cellValue)])){
-                            stringBuffer.append("CONVERT(datetime,'" + lists.get(sheetNum)[x][Integer.parseInt(cellValue)] + "',120),");
-                        }else if(Utils.isNumeric(lists.get(sheetNum)[x][Integer.parseInt(cellValue)])){
-                            stringBuffer.append(lists.get(sheetNum)[x][Integer.parseInt(cellValue)] + ",");
-                        }else {
-                            stringBuffer.append("'" + lists.get(sheetNum)[x][Integer.parseInt(cellValue)] + "',");
                         }
                     }
-                    stringBuffer.deleteCharAt(stringBuffer.length() - 1);
-                    stringBuffer.append("),(");
+                    hashMap.put(sheetNum + ":" +stringBuffer.toString(), sb.toString());
+                    hashMapListResult.add(hashMap);
                 }
-                stringBuffer.delete(stringBuffer.length() - 2,stringBuffer.length());
-                stringBuffer.append(";");
             }
-            bufferWritter.flush();
-            record = stringBuffer.toString().replaceAll("'null'","null");
-            bufferWritter.write(record);
-            bufferWritter.newLine();
-            bufferWritter.write("-------------------------------------------------------------");
-            bufferWritter.newLine();
+
+            File file1 = new File(path + File.separator + fileName.split("\\.")[0] + ".txt");
+            if(!file1.exists()){
+                file1.createNewFile();
+            }else{
+                file1.delete();
+                file1.createNewFile();
+            }
+
+            FileWriter fileWritter = new FileWriter(path + File.separator + fileName.split("\\.")[0] + ".txt",true);
+            BufferedWriter bufferWritter = new BufferedWriter(fileWritter);
+
+            for(HashMap map : hashMapListResult){
+                Set set=map.entrySet();
+                Iterator it=set.iterator();
+                int sheetNum = 0;
+                StringBuffer stringBuffer = new StringBuffer();
+                String record = "";
+
+                while (it.hasNext()){
+                    Map.Entry me=(Map.Entry)it.next();
+                    sheetNum = Integer.parseInt(me.getKey().toString().split(":")[0]);
+                    stringBuffer.append(me.getKey().toString().split(":")[1].substring(0,me.getKey().toString().split(":")[1].length() -1) + ") VALUES (");
+                    for(int x=2; x<lists.get(sheetNum).length; x++){
+                        String cellNum = me.getValue().toString().substring(0,me.getValue().toString().length() - 1);
+                        for(String cellValue : cellNum.split(",")) {
+                            if(Utils.isValidDate(lists.get(sheetNum)[x][Integer.parseInt(cellValue)])){
+                                stringBuffer.append("CONVERT(datetime,'" + lists.get(sheetNum)[x][Integer.parseInt(cellValue)] + "',120),");
+                            }else if(Utils.isNumeric(lists.get(sheetNum)[x][Integer.parseInt(cellValue)])){
+                                stringBuffer.append(lists.get(sheetNum)[x][Integer.parseInt(cellValue)] + ",");
+                            }else {
+                                stringBuffer.append("'" + lists.get(sheetNum)[x][Integer.parseInt(cellValue)] + "',");
+                            }
+                        }
+                        stringBuffer.deleteCharAt(stringBuffer.length() - 1);
+                        stringBuffer.append("),(");
+                    }
+                    stringBuffer.delete(stringBuffer.length() - 2,stringBuffer.length());
+                    stringBuffer.append(";");
+                }
+                bufferWritter.flush();
+                record = stringBuffer.toString().replaceAll("'null'","null");
+                bufferWritter.write(record);
+                bufferWritter.newLine();
+                bufferWritter.write("-------------------------------------------------------------");
+                bufferWritter.newLine();
+            }
+
+            bufferWritter.close();
+            fileWritter.close();
+            System.out.println("finish");
         }
-
-        bufferWritter.close();
-        fileWritter.close();
-        System.out.println("finish");
-
         response.sendRedirect(request.getContextPath() + "/excel/findAllExcel");
     }
 
